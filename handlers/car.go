@@ -11,6 +11,9 @@ import (
 	"github.com/hse-trpo-taxi/backend/models"
 )
 
+// GetCars handles GET /api/cars requests.
+// It retrieves all cars from the database and returns them as a JSON array.
+// Returns HTTP 500 if there's a database error.
 func GetCars(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, driver_id, brand, model, year, license_plate, color, created_at, updated_at FROM cars")
 	if err != nil {
@@ -33,6 +36,10 @@ func GetCars(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(cars)
 }
 
+// GetCar handles GET /api/cars/{id} requests.
+// It retrieves a specific car by ID and returns it as JSON.
+// Returns HTTP 400 if the ID is invalid, HTTP 404 if the car is not found,
+// or HTTP 500 if there's a database error.
 func GetCar(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -44,7 +51,7 @@ func GetCar(w http.ResponseWriter, r *http.Request) {
 	var car models.Car
 	err = database.DB.QueryRow("SELECT id, driver_id, brand, model, year, license_plate, color, created_at, updated_at FROM cars WHERE id = ?", id).
 		Scan(&car.ID, &car.DriverID, &car.Brand, &car.Model, &car.Year, &car.LicensePlate, &car.Color, &car.CreatedAt, &car.UpdatedAt)
-	
+
 	if err != nil {
 		http.Error(w, "Car not found", http.StatusNotFound)
 		return
@@ -54,6 +61,12 @@ func GetCar(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(car)
 }
 
+// CreateCar handles POST /api/cars requests.
+// It creates a new car with the provided JSON data.
+// The created_at and updated_at timestamps are automatically set.
+// The driver_id must reference an existing driver.
+// Returns the created car with HTTP 201 on success,
+// HTTP 400 if the request body is invalid, or HTTP 500 if there's a database error.
 func CreateCar(w http.ResponseWriter, r *http.Request) {
 	var car models.Car
 	if err := json.NewDecoder(r.Body).Decode(&car); err != nil {
@@ -79,6 +92,12 @@ func CreateCar(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(car)
 }
 
+// UpdateCar handles PUT /api/cars/{id} requests.
+// It updates an existing car with the provided JSON data.
+// The updated_at timestamp is automatically set to the current time.
+// The driver_id must reference an existing driver if changed.
+// Returns the updated car as JSON on success,
+// HTTP 400 if the ID or request body is invalid, or HTTP 500 if there's a database error.
 func UpdateCar(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -107,6 +126,10 @@ func UpdateCar(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(car)
 }
 
+// DeleteCar handles DELETE /api/cars/{id} requests.
+// It removes a car from the database by ID.
+// Returns HTTP 204 (No Content) on successful deletion,
+// HTTP 400 if the ID is invalid, or HTTP 500 if there's a database error.
 func DeleteCar(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])

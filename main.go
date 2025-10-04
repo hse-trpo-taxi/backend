@@ -1,3 +1,6 @@
+// Package main provides the entry point for the taxi service backend API server.
+// This service manages clients, drivers, and cars for a taxi service.
+// It provides RESTful endpoints for CRUD operations on these entities.
 package main
 
 import (
@@ -10,6 +13,9 @@ import (
 	"github.com/hse-trpo-taxi/backend/handlers"
 )
 
+// main initializes the taxi service backend API server.
+// It loads configuration, initializes the database connection,
+// sets up HTTP routes, and starts the server on the configured port.
 func main() {
 	// Load configuration
 	cfg := config.LoadConfig()
