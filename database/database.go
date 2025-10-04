@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
 
 func InitDB(dataSourceName string) error {
 	var err error
-	DB, err = sql.Open("sqlite3", dataSourceName)
+	DB, err = sql.Open("postgres", dataSourceName)
 	if err != nil {
 		return fmt.Errorf("error opening database: %v", err)
 	}
@@ -28,36 +28,36 @@ func InitDB(dataSourceName string) error {
 func createTables() error {
 	clientsTable := `
 	CREATE TABLE IF NOT EXISTS clients (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		phone TEXT NOT NULL,
-		email TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,
+		phone VARCHAR(50) NOT NULL,
+		email VARCHAR(255) NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	driversTable := `
 	CREATE TABLE IF NOT EXISTS drivers (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		phone TEXT NOT NULL,
-		license_number TEXT NOT NULL,
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,
+		phone VARCHAR(50) NOT NULL,
+		license_number VARCHAR(50) NOT NULL,
 		rating REAL DEFAULT 0.0,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	carsTable := `
 	CREATE TABLE IF NOT EXISTS cars (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY,
 		driver_id INTEGER NOT NULL,
-		brand TEXT NOT NULL,
-		model TEXT NOT NULL,
+		brand VARCHAR(100) NOT NULL,
+		model VARCHAR(100) NOT NULL,
 		year INTEGER NOT NULL,
-		license_plate TEXT NOT NULL,
-		color TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		license_plate VARCHAR(50) NOT NULL,
+		color VARCHAR(50) NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (driver_id) REFERENCES drivers(id)
 	);`
 

@@ -6,7 +6,7 @@ Golang backend server для обработки API запросов для об
 
 ## Требования
 - Go 1.16 или выше
-- SQLite3
+- PostgreSQL 12 или выше
 
 ## Установка и запуск
 
@@ -28,13 +28,47 @@ go build -o backend
 Сервер запустится на порту 8080 (по умолчанию).
 
 ### Переменные окружения
-- `SERVER_PORT` - порт сервера (по умолчанию: 8080)
-- `DB_PATH` - путь к базе данных SQLite (по умолчанию: ./taxi.db)
 
-Пример:
+#### Основные настройки
+- `SERVER_PORT` - порт сервера (по умолчанию: 8080)
+- `DATABASE_URL` - полная строка подключения к PostgreSQL (опционально)
+
+#### Настройки подключения к PostgreSQL (если DATABASE_URL не указан)
+- `DB_HOST` - хост PostgreSQL (по умолчанию: localhost)
+- `DB_PORT` - порт PostgreSQL (по умолчанию: 5432)
+- `DB_USER` - имя пользователя PostgreSQL (по умолчанию: postgres)
+- `DB_PASSWORD` - пароль пользователя PostgreSQL (по умолчанию: postgres)
+- `DB_NAME` - имя базы данных (по умолчанию: taxi)
+- `DB_SSLMODE` - режим SSL (по умолчанию: disable)
+
+Примеры:
 ```bash
-SERVER_PORT=3000 DB_PATH=/tmp/taxi.db ./backend
+# Использование DATABASE_URL
+DATABASE_URL="host=localhost port=5432 user=postgres password=secret dbname=taxi sslmode=disable" ./backend
+
+# Использование отдельных переменных
+DB_HOST=localhost DB_PORT=5432 DB_USER=postgres DB_PASSWORD=secret DB_NAME=taxi ./backend
+
+# Минимальная конфигурация (используются значения по умолчанию)
+./backend
 ```
+
+### Настройка базы данных
+
+Перед запуском сервера необходимо создать базу данных PostgreSQL:
+
+```bash
+# Подключиться к PostgreSQL
+psql -U postgres
+
+# Создать базу данных
+CREATE DATABASE taxi;
+
+# Выйти из psql
+\q
+```
+
+Таблицы будут созданы автоматически при первом запуске сервера.
 
 ## API Endpoints
 
