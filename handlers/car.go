@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/hse-trpo-taxi/backend/usecases/cars"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,54 +13,51 @@ import (
 	"github.com/hse-trpo-taxi/backend/models"
 )
 
+type CarHandler struct {
+	carUS cars.CarUseCase
+	lgr   *slog.Logger
+}
+
+func NewCarHandler(carUS cars.CarUseCase, lgr *slog.Logger) *CarHandler {
+	return &CarHandler{carUS, lgr}
+}
+
 // GetCars handles GET /api/cars requests.
 // It retrieves all cars from the database and returns them as a JSON array.
 // Returns HTTP 500 if there's a database error.
-func GetCars(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, driver_id, brand, model, year, license_plate, color, created_at, updated_at FROM cars")
+func (handler *CarHandler) GetCars(w http.ResponseWriter, r *http.Request) {
+	items, err := handler.carUS.GetCars()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetCars", err)
+
 		return
 	}
-	defer rows.Close()
 
-	cars := []models.Car{}
-	for rows.Next() {
-		var car models.Car
-		if err := rows.Scan(&car.ID, &car.DriverID, &car.Brand, &car.Model, &car.Year, &car.LicensePlate, &car.Color, &car.CreatedAt, &car.UpdatedAt); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		cars = append(cars, car)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(cars)
+	respondWithJSON(w, items, handler.lgr, "GetCars")
 }
 
 // GetCar handles GET /api/cars/{id} requests.
 // It retrieves a specific car by ID and returns it as JSON.
 // Returns HTTP 400 if the ID is invalid, HTTP 404 if the car is not found,
 // or HTTP 500 if there's a database error.
-func GetCar(w http.ResponseWriter, r *http.Request) {
+func (handler *CarHandler) GetCarById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid car ID", http.StatusBadRequest)
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "GetCarById", err)
+
 		return
 	}
 
-	var car models.Car
-	err = database.DB.QueryRow("SELECT id, driver_id, brand, model, year, license_plate, color, created_at, updated_at FROM cars WHERE id = ?", id).
-		Scan(&car.ID, &car.DriverID, &car.Brand, &car.Model, &car.Year, &car.LicensePlate, &car.Color, &car.CreatedAt, &car.UpdatedAt)
+	car, err := handler.carUS.GetCarByID(uint32(id))
 
 	if err != nil {
-		http.Error(w, "Car not found", http.StatusNotFound)
+		respondWithError(w, handler.lgr, http.StatusNotFound, "GetCarById", err)
+
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(car)
+	respondWithJSON(w, car, handler.lgr, "GetCarById")
 }
 
 // CreateCar handles POST /api/cars requests.
@@ -130,19 +129,21 @@ func UpdateCar(w http.ResponseWriter, r *http.Request) {
 // It removes a car from the database by ID.
 // Returns HTTP 204 (No Content) on successful deletion,
 // HTTP 400 if the ID is invalid, or HTTP 500 if there's a database error.
-func DeleteCar(w http.ResponseWriter, r *http.Request) {
+func (handler *CarHandler) DeleteCar(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid car ID", http.StatusBadRequest)
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "DeleteCar", err)
+
 		return
 	}
 
-	_, err = database.DB.Exec("DELETE FROM cars WHERE id = ?", id)
+	err = handler.carUS.DeleteCar(uint32(id))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "DeleteCar", err)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }

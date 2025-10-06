@@ -3,12 +3,29 @@
 package database
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
-	"log"
+	"github.com/hse-trpo-taxi/backend/config"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"log/slog"
 
 	_ "github.com/lib/pq"
 )
+
+// NewPgPool creates pool of pg connections
+// Returns an error if the connection fails
+func NewPgPool(config *config.Config) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.New(context.Background(), config.DatabaseDSN)
+	if err != nil {
+		return nil, err
+	}
+
+	if errDb := pool.Ping(context.Background()); errDb != nil {
+		return nil, errDb
+	}
+
+	return pool, nil
+}
 
 // DB is the global database connection instance used throughout the application.
 // It is initialized by InitDB and should be closed using CloseDB when the application shuts down.
@@ -18,26 +35,26 @@ var DB *sql.DB
 // It opens a PostgreSQL connection, verifies connectivity with a ping,
 // and creates the necessary tables for the taxi service.
 // Returns an error if the connection fails or table creation fails.
-func InitDB(dataSourceName string) error {
+func InitDB(pool *pgxpool.Pool, logger *slog.Logger) error {
 	var err error
-	DB, err = sql.Open("postgres", dataSourceName)
-	if err != nil {
-		return fmt.Errorf("error opening database: %v", err)
+
+	if err = pool.Ping(context.Background()); err != nil {
+		return err
 	}
 
-	if err = DB.Ping(); err != nil {
-		return fmt.Errorf("error connecting to database: %v", err)
+	logger.Info("Database connection established")
+	if err = createTables(pool); err != nil {
+		return err
 	}
 
-	log.Println("Database connection established")
-	return createTables()
+	return nil
 }
 
 // createTables creates the necessary database tables for the taxi service.
 // It creates three tables: clients, drivers, and cars with their respective schemas.
 // The cars table has a foreign key reference to the drivers table.
 // Returns an error if any table creation fails.
-func createTables() error {
+func createTables(pool *pgxpool.Pool) error {
 	clientsTable := `
 	CREATE TABLE IF NOT EXISTS clients (
 		id SERIAL PRIMARY KEY,
@@ -75,12 +92,11 @@ func createTables() error {
 
 	tables := []string{clientsTable, driversTable, carsTable}
 	for _, table := range tables {
-		if _, err := DB.Exec(table); err != nil {
-			return fmt.Errorf("error creating table: %v", err)
+		if _, err := pool.Exec(context.Background(), table); err != nil {
+			return err
 		}
 	}
 
-	log.Println("Database tables created successfully")
 	return nil
 }
 
