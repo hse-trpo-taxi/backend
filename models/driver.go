@@ -21,3 +21,25 @@ type Driver struct {
 	// UpdatedAt is the timestamp when the driver record was last modified
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
+
+type CreateDriverModel struct {
+	Name          string  `json:"name" db:"name"`
+	Phone         string  `json:"phone" db:"phone"`
+	LicenseNumber string  `json:"license_number" db:"license_number"`
+	Rating        float64 `json:"rating" db:"rating"`
+}
+
+func (model *CreateDriverModel) Validate() bool {
+	if model.Rating < 0 {
+		return false
+	}
+
+	return true
+}
+
+type UpdateDriverModel struct {
+	Name          string  `json:"name" db:"name"`
+	Phone         string  `json:"phone" db:"phone"`
+	LicenseNumber string  `json:"license_number" db:"license_number"`
+	Rating        float64 `json:"rating" db:"rating"`
+}

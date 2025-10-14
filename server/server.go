@@ -1,6 +1,5 @@
 package server
 
-import "C"
 import (
 	"context"
 	"github.com/Masterminds/squirrel"
@@ -22,7 +21,6 @@ import (
 const (
 	GracefulShutdownTimeOut = 5
 	ServerTimeOut           = 3
-	ServerMaxAge            = 300
 )
 
 type Server struct {
@@ -104,29 +102,35 @@ func (server *Server) Run() error {
 func (server *Server) PrepareHandlers(router *mux.Router) error {
 
 	carRepo := repositories.NewCarRepository(server.pgDB, server.builder)
+	clientRepo := repositories.NewClientRepository(server.pgDB, server.builder)
+	driverRepo := repositories.NewDriverRepository(server.pgDB, server.builder)
 
 	carUS := usecases.NewCarUseCase(carRepo)
+	clientUS := usecases.NewClientUseCase(clientRepo)
+	driverUS := usecases.NewDriverUseCase(driverRepo)
 
 	carHandler := handlers.NewCarHandler(carUS, server.logger)
+	clientHandler := handlers.NewClientHandler(clientUS, server.logger)
+	driverHandler := handlers.NewDriverHandler(driverUS, server.logger)
 
-	router.HandleFunc("/api/clients", handlers.GetClients).Methods("GET")
-	router.HandleFunc("/api/clients/{id}", handlers.GetClient).Methods("GET")
-	router.HandleFunc("/api/clients", handlers.CreateClient).Methods("POST")
-	router.HandleFunc("/api/clients/{id}", handlers.UpdateClient).Methods("PUT")
-	router.HandleFunc("/api/clients/{id}", handlers.DeleteClient).Methods("DELETE")
+	router.HandleFunc("/api/clients", clientHandler.GetClients).Methods("GET")
+	router.HandleFunc("/api/clients/{id}", clientHandler.GetClientById).Methods("GET")
+	router.HandleFunc("/api/clients", clientHandler.CreateClient).Methods("POST")
+	router.HandleFunc("/api/clients/{id}", clientHandler.UpdateClient).Methods("PUT")
+	router.HandleFunc("/api/clients/{id}", clientHandler.DeleteClient).Methods("DELETE")
 
 	// Driver routes
-	router.HandleFunc("/api/drivers", handlers.GetDrivers).Methods("GET")
-	router.HandleFunc("/api/drivers/{id}", handlers.GetDriver).Methods("GET")
-	router.HandleFunc("/api/drivers", handlers.CreateDriver).Methods("POST")
-	router.HandleFunc("/api/drivers/{id}", handlers.UpdateDriver).Methods("PUT")
-	router.HandleFunc("/api/drivers/{id}", handlers.DeleteDriver).Methods("DELETE")
+	router.HandleFunc("/api/drivers", driverHandler.GetDrivers).Methods("GET")
+	router.HandleFunc("/api/drivers/{id}", driverHandler.GetDriverById).Methods("GET")
+	router.HandleFunc("/api/drivers", driverHandler.CreateDriver).Methods("POST")
+	router.HandleFunc("/api/drivers/{id}", driverHandler.UpdateDriver).Methods("PUT")
+	router.HandleFunc("/api/drivers/{id}", driverHandler.DeleteDriver).Methods("DELETE")
 
 	// Car routes
 	router.HandleFunc("/api/cars", carHandler.GetCars).Methods("GET")
 	router.HandleFunc("/api/cars/{id}", carHandler.GetCarById).Methods("GET")
-	router.HandleFunc("/api/cars", handlers.CreateCar).Methods("POST")
-	router.HandleFunc("/api/cars/{id}", handlers.UpdateCar).Methods("PUT")
+	router.HandleFunc("/api/cars", carHandler.CreateCar).Methods("POST")
+	router.HandleFunc("/api/cars/{id}", carHandler.UpdateCar).Methods("PUT")
 	router.HandleFunc("/api/cars/{id}", carHandler.DeleteCar).Methods("DELETE")
 
 	// Health check endpoint

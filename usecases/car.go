@@ -24,8 +24,8 @@ func (useCase *CarUseCase) GetCars() ([]*models.Car, error) {
 	return items, nil
 }
 
-func (useCase *CarUseCase) GetCarByID(id uint32) (*models.Car, error) {
-	car, err := useCase.GetCarById(id)
+func (useCase *CarUseCase) GetCarById(id uint32) (*models.Car, error) {
+	car, err := useCase.CarRepository.GetCarById(id)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (useCase *CarUseCase) GetCarByID(id uint32) (*models.Car, error) {
 	return car, nil
 }
 
-func (useCase *CarUseCase) CreateCar(model *models.Car) (*models.Car, error) {
+func (useCase *CarUseCase) CreateCar(model *models.CreateCarModel) (*models.Car, error) {
 	car, err := useCase.CarRepository.CreateCar(model)
 	if err != nil {
 		return nil, err
@@ -42,8 +42,8 @@ func (useCase *CarUseCase) CreateCar(model *models.Car) (*models.Car, error) {
 	return car, nil
 }
 
-func (useCase *CarUseCase) UpdateCar(model *models.Car) (*models.Car, error) {
-	car, err := useCase.CarRepository.UpdateCar(model)
+func (useCase *CarUseCase) UpdateCar(id uint32, model *models.UpdateCarModel) (*models.Car, error) {
+	car, err := useCase.CarRepository.UpdateCar(id, model)
 	if err != nil {
 		return nil, err
 	}

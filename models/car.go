@@ -25,3 +25,38 @@ type Car struct {
 	// UpdatedAt is the timestamp when the car record was last modified
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
+
+func (model Car) InsertColumns() []string {
+	return []string{
+		"driver_id",
+		"brand",
+		"model",
+		"year",
+		"license_plate",
+		"color",
+		"created_at",
+		"updated_at",
+	}
+}
+
+type CreateCarModel struct {
+	DriverID     int    `json:"driver_id" db:"driver_id"`
+	Brand        string `json:"brand" db:"brand"`
+	Model        string `json:"model" db:"model"`
+	Year         int    `json:"year" db:"year"`
+	LicensePlate string `json:"license_plate" db:"license_plate"`
+	Color        string `json:"color" db:"color"`
+}
+
+type UpdateCarModel struct {
+	DriverID int    `json:"driver_id" db:"driver_id"`
+	Color    string `json:"color" db:"color"`
+}
+
+func (model *CreateCarModel) Validate() bool {
+	if model.Year < 1950 {
+		return false
+	}
+
+	return true
+}

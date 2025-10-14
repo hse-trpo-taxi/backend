@@ -5,6 +5,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/hse-trpo-taxi/backend/models"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"time"
 )
 
 type CarRepository struct {
@@ -85,22 +86,69 @@ func (repository *CarRepository) GetCarById(id uint32) (*models.Car, error) {
 	return newItem, nil
 }
 
-func (repository *CarRepository) CreateCar(model *models.Car) (*models.Car, error) {
-	query, args, err := repository.builder.Insert("cars").Columns().Values().ToSql()
+func (repository *CarRepository) CreateCar(model *models.CreateCarModel) (*models.Car, error) {
+	query, args, err := repository.builder.Insert("cars").
+		Columns("driver_id", "brand", "model", "year", "license_plate", "color", "created_at", "updated_at").
+		Values(model.DriverID, model.Brand, model.Model, model.Year, model.LicensePlate, model.Color, time.Now(), time.Now()).
+		Suffix("RETURNING id, created_at, updated_at").
+		ToSql()
+
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = repository.db.Exec(context.Background(), query, args...)
+	var id int
+	var createdAt, updatedAt time.Time
+
+	err = repository.db.QueryRow(context.Background(), query, args...).Scan(&id, &createdAt, &updatedAt)
 
 	if err != nil {
 		return nil, err
 	}
 
-	newItem := &models.Car{}
+	return &models.Car{
+		ID:           id,
+		DriverID:     model.DriverID,
+		Brand:        model.Brand,
+		Model:        model.Model,
+		Year:         model.Year,
+		LicensePlate: model.LicensePlate,
+		Color:        model.Color,
+		CreatedAt:    createdAt,
+		UpdatedAt:    updatedAt,
+	}, nil
 }
 
-func (repository *CarRepository) UpdateCar(model *models.Car) (*models.Car, error) {
+func (repository *CarRepository) UpdateCar(id uint32, model *models.UpdateCarModel) (*models.Car, error) {
+	query, args, err := repository.builder.Update("cars").
+		Where(squirrel.Eq{"id": id}).
+		SetMap(map[string]interface{}{"driver_id": model.DriverID, "color": model.Color, "updated_at": time.Now()}).
+		Suffix("RETURNING id, driver_id, brand, model, year, license_plate, color, created_at, updated_at").
+		ToSql()
+
+	if err != nil {
+		return nil, err
+	}
+
+	car := &models.Car{}
+
+	err = repository.db.QueryRow(context.Background(), query, args...).Scan(
+		&car.ID,
+		&car.DriverID,
+		&car.Brand,
+		&car.Model,
+		&car.Year,
+		&car.LicensePlate,
+		&car.Color,
+		&car.CreatedAt,
+		&car.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return car, nil
 
 }
 

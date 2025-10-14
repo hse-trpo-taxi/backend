@@ -22,6 +22,7 @@ func main() {
 	lgr := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 	builder := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	pgDB, err := database.NewPgPool(cfg)
+
 	if err != nil {
 		lgr.Error(err.Error())
 	}

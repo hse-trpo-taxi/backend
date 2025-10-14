@@ -2,63 +2,60 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
+	"github.com/hse-trpo-taxi/backend/models"
+	"github.com/hse-trpo-taxi/backend/usecases/drivers"
+	"log/slog"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/gorilla/mux"
-	"github.com/hse-trpo-taxi/backend/database"
-	"github.com/hse-trpo-taxi/backend/models"
 )
+
+type DriverHandler struct {
+	driverUS drivers.DriverUseCase
+	lgr      *slog.Logger
+}
+
+func NewDriverHandler(driverUS drivers.DriverUseCase, lgr *slog.Logger) *DriverHandler {
+	return &DriverHandler{driverUS, lgr}
+}
 
 // GetDrivers handles GET /api/drivers requests.
 // It retrieves all drivers from the database and returns them as a JSON array.
 // Returns HTTP 500 if there's a database error.
-func GetDrivers(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, name, phone, license_number, rating, created_at, updated_at FROM drivers")
+func (handler *DriverHandler) GetDrivers(w http.ResponseWriter, r *http.Request) {
+	items, err := handler.driverUS.GetDrivers()
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDrivers", err)
+
 		return
 	}
-	defer rows.Close()
 
-	drivers := []models.Driver{}
-	for rows.Next() {
-		var driver models.Driver
-		if err := rows.Scan(&driver.ID, &driver.Name, &driver.Phone, &driver.LicenseNumber, &driver.Rating, &driver.CreatedAt, &driver.UpdatedAt); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		drivers = append(drivers, driver)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(drivers)
+	respondWithJSON(w, items, handler.lgr, "GetDrivers")
 }
 
-// GetDriver handles GET /api/drivers/{id} requests.
+// GetDriverById handles GET /api/drivers/{id} requests.
 // It retrieves a specific driver by ID and returns it as JSON.
 // Returns HTTP 400 if the ID is invalid, HTTP 404 if the driver is not found,
 // or HTTP 500 if there's a database error.
-func GetDriver(w http.ResponseWriter, r *http.Request) {
+func (handler *DriverHandler) GetDriverById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid driver ID", http.StatusBadRequest)
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "GetDriverById", err)
+
 		return
 	}
 
-	var driver models.Driver
-	err = database.DB.QueryRow("SELECT id, name, phone, license_number, rating, created_at, updated_at FROM drivers WHERE id = ?", id).
-		Scan(&driver.ID, &driver.Name, &driver.Phone, &driver.LicenseNumber, &driver.Rating, &driver.CreatedAt, &driver.UpdatedAt)
+	driver, err := handler.driverUS.GetDriverById(uint32(id))
 
 	if err != nil {
-		http.Error(w, "Driver not found", http.StatusNotFound)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDriverById", err)
+
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(driver)
+	respondWithJSON(w, driver, handler.lgr, "GetDriverById")
 }
 
 // CreateDriver handles POST /api/drivers requests.
@@ -66,29 +63,24 @@ func GetDriver(w http.ResponseWriter, r *http.Request) {
 // The created_at and updated_at timestamps are automatically set.
 // Returns the created driver with HTTP 201 on success,
 // HTTP 400 if the request body is invalid, or HTTP 500 if there's a database error.
-func CreateDriver(w http.ResponseWriter, r *http.Request) {
-	var driver models.Driver
-	if err := json.NewDecoder(r.Body).Decode(&driver); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func (handler *DriverHandler) CreateDriver(w http.ResponseWriter, r *http.Request) {
+	var newDriver *models.CreateDriverModel
+
+	if err := json.NewDecoder(r.Body).Decode(&newDriver); err != nil {
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "CreateDriver", err)
+
 		return
 	}
 
-	driver.CreatedAt = time.Now()
-	driver.UpdatedAt = time.Now()
+	driver, err := handler.driverUS.CreateDriver(newDriver)
 
-	result, err := database.DB.Exec("INSERT INTO drivers (name, phone, license_number, rating, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-		driver.Name, driver.Phone, driver.LicenseNumber, driver.Rating, driver.CreatedAt, driver.UpdatedAt)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "CreateDriver", err)
+
 		return
 	}
 
-	id, _ := result.LastInsertId()
-	driver.ID = int(id)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(driver)
+	respondWithJSON(w, driver, handler.lgr, "CreateDriver")
 }
 
 // UpdateDriver handles PUT /api/drivers/{id} requests.
@@ -96,32 +88,32 @@ func CreateDriver(w http.ResponseWriter, r *http.Request) {
 // The updated_at timestamp is automatically set to the current time.
 // Returns the updated driver as JSON on success,
 // HTTP 400 if the ID or request body is invalid, or HTTP 500 if there's a database error.
-func UpdateDriver(w http.ResponseWriter, r *http.Request) {
+func (handler *DriverHandler) UpdateDriver(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid driver ID", http.StatusBadRequest)
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "UpdateDriver", err)
+
 		return
 	}
 
-	var driver models.Driver
-	if err := json.NewDecoder(r.Body).Decode(&driver); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	var newDriver *models.UpdateDriverModel
+
+	if err := json.NewDecoder(r.Body).Decode(&newDriver); err != nil {
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "UpdateDriver", err)
+
 		return
 	}
 
-	driver.UpdatedAt = time.Now()
+	driver, err := handler.driverUS.UpdateDriver(uint32(id), newDriver)
 
-	_, err = database.DB.Exec("UPDATE drivers SET name = ?, phone = ?, license_number = ?, rating = ?, updated_at = ? WHERE id = ?",
-		driver.Name, driver.Phone, driver.LicenseNumber, driver.Rating, driver.UpdatedAt, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "UpdateDriver", err)
+
 		return
 	}
 
-	driver.ID = id
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(driver)
+	respondWithJSON(w, driver, handler.lgr, "UpdateDriver")
 }
 
 // DeleteDriver handles DELETE /api/drivers/{id} requests.
@@ -129,19 +121,23 @@ func UpdateDriver(w http.ResponseWriter, r *http.Request) {
 // Note: This operation may fail if the driver has associated cars due to foreign key constraints.
 // Returns HTTP 204 (No Content) on successful deletion,
 // HTTP 400 if the ID is invalid, or HTTP 500 if there's a database error.
-func DeleteDriver(w http.ResponseWriter, r *http.Request) {
+func (handler *DriverHandler) DeleteDriver(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid driver ID", http.StatusBadRequest)
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "DeleteDriver", err)
+
 		return
 	}
 
-	_, err = database.DB.Exec("DELETE FROM drivers WHERE id = ?", id)
+	err = handler.driverUS.DeleteDriver(uint32(id))
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "DeleteDriver", err)
+
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -2,15 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
+	"github.com/hse-trpo-taxi/backend/errors"
+	"github.com/hse-trpo-taxi/backend/models"
 	"github.com/hse-trpo-taxi/backend/usecases/cars"
 	"log/slog"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/gorilla/mux"
-	"github.com/hse-trpo-taxi/backend/database"
-	"github.com/hse-trpo-taxi/backend/models"
 )
 
 type CarHandler struct {
@@ -36,7 +34,7 @@ func (handler *CarHandler) GetCars(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, items, handler.lgr, "GetCars")
 }
 
-// GetCar handles GET /api/cars/{id} requests.
+// GetCarById handles GET /api/cars/{id} requests.
 // It retrieves a specific car by ID and returns it as JSON.
 // Returns HTTP 400 if the ID is invalid, HTTP 404 if the car is not found,
 // or HTTP 500 if there's a database error.
@@ -49,7 +47,7 @@ func (handler *CarHandler) GetCarById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	car, err := handler.carUS.GetCarByID(uint32(id))
+	car, err := handler.carUS.GetCarById(uint32(id))
 
 	if err != nil {
 		respondWithError(w, handler.lgr, http.StatusNotFound, "GetCarById", err)
@@ -66,29 +64,29 @@ func (handler *CarHandler) GetCarById(w http.ResponseWriter, r *http.Request) {
 // The driver_id must reference an existing driver.
 // Returns the created car with HTTP 201 on success,
 // HTTP 400 if the request body is invalid, or HTTP 500 if there's a database error.
-func CreateCar(w http.ResponseWriter, r *http.Request) {
-	var car models.Car
-	if err := json.NewDecoder(r.Body).Decode(&car); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func (handler *CarHandler) CreateCar(w http.ResponseWriter, r *http.Request) {
+	var newCar *models.CreateCarModel
+	if err := json.NewDecoder(r.Body).Decode(&newCar); err != nil {
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "CreateCar", err)
+
 		return
 	}
 
-	car.CreatedAt = time.Now()
-	car.UpdatedAt = time.Now()
+	if !newCar.Validate() {
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "CreateCar", &errors.ValidationError{})
 
-	result, err := database.DB.Exec("INSERT INTO cars (driver_id, brand, model, year, license_plate, color, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		car.DriverID, car.Brand, car.Model, car.Year, car.LicensePlate, car.Color, car.CreatedAt, car.UpdatedAt)
+		return
+	}
+
+	car, err := handler.carUS.CreateCar(newCar)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "CreateCar", err)
+
 		return
 	}
 
-	id, _ := result.LastInsertId()
-	car.ID = int(id)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(car)
+	respondWithJSON(w, car, handler.lgr, "CreateCar")
 }
 
 // UpdateCar handles PUT /api/cars/{id} requests.
@@ -97,32 +95,31 @@ func CreateCar(w http.ResponseWriter, r *http.Request) {
 // The driver_id must reference an existing driver if changed.
 // Returns the updated car as JSON on success,
 // HTTP 400 if the ID or request body is invalid, or HTTP 500 if there's a database error.
-func UpdateCar(w http.ResponseWriter, r *http.Request) {
+func (handler *CarHandler) UpdateCar(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid car ID", http.StatusBadRequest)
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "UpdateCar", err)
+
 		return
 	}
 
-	var car models.Car
-	if err := json.NewDecoder(r.Body).Decode(&car); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	var updateCar *models.UpdateCarModel
+	if err := json.NewDecoder(r.Body).Decode(&updateCar); err != nil {
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "UpdateCar", err)
+
 		return
 	}
 
-	car.UpdatedAt = time.Now()
+	car, err := handler.carUS.UpdateCar(uint32(id), updateCar)
 
-	_, err = database.DB.Exec("UPDATE cars SET driver_id = ?, brand = ?, model = ?, year = ?, license_plate = ?, color = ?, updated_at = ? WHERE id = ?",
-		car.DriverID, car.Brand, car.Model, car.Year, car.LicensePlate, car.Color, car.UpdatedAt, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "UpdateCar", err)
+
 		return
 	}
 
-	car.ID = id
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(car)
+	respondWithJSON(w, car, handler.lgr, "UpdateCar")
 }
 
 // DeleteCar handles DELETE /api/cars/{id} requests.
