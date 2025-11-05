@@ -22,8 +22,10 @@ linters:
     - gocognit
     - gocritic
     - goconst
+    - gocyclo
     - goheader
     - gosec
+    - govet
     - importas
     - makezero
     - mnd
@@ -31,6 +33,7 @@ linters:
     - nilnil
     - noctx
     - perfsprint
+    - prealloc
     - reassign
     - sloglint
     - tagalign
@@ -38,7 +41,7 @@ linters:
     - unparam
     - usestdlibvars
     - whitespace
-    - wsl
+    - wsl_v5
 
 formatters:
   enable:

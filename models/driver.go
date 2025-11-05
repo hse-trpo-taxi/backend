@@ -30,11 +30,7 @@ type CreateDriverModel struct {
 }
 
 func (model *CreateDriverModel) Validate() bool {
-	if model.Rating < 0 {
-		return false
-	}
-
-	return true
+	return model.Rating >= 0
 }
 
 type UpdateDriverModel struct {
