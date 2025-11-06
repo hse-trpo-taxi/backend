@@ -2,6 +2,8 @@ package drivers
 
 import "github.com/hse-trpo-taxi/backend/models"
 
+//go:generate mockgen --source=deps.go --destination=mocks/mock.go
+
 type DriverUseCase interface {
 	GetDrivers() ([]*models.Driver, error)
 	GetDriverById(id uint32) (*models.Driver, error)

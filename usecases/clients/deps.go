@@ -2,6 +2,8 @@ package clients
 
 import "github.com/hse-trpo-taxi/backend/models"
 
+//go:generate mockgen --source=deps.go --destination=mocks/mock.go
+
 type ClientUseCase interface {
 	GetClients() ([]*models.Client, error)
 	GetClientById(id uint32) (*models.Client, error)

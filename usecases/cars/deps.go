@@ -2,6 +2,8 @@ package cars
 
 import "github.com/hse-trpo-taxi/backend/models"
 
+//go:generate mockgen --source=deps.go --destination=mocks/mock.go
+
 type CarUseCase interface {
 	GetCars() ([]*models.Car, error)
 	GetCarById(id uint32) (*models.Car, error)
