@@ -10,6 +10,9 @@ type DriverUseCase interface {
 	CreateDriver(model *models.CreateDriverModel) (*models.Driver, error)
 	UpdateDriver(id uint32, model *models.UpdateDriverModel) (*models.Driver, error)
 	DeleteDriver(id uint32) error
+	GetDriversMeanScore() (*models.DriversMeanScore, error)
+	GetDriversCoords() ([]*models.DriverCoords, error)
+	GetDriverStat(model *models.DriverStatRequestModel) ([]*models.DriverStat, error)
 }
 
 type DriverRepository interface {
@@ -18,4 +21,6 @@ type DriverRepository interface {
 	CreateDriver(model *models.CreateDriverModel) (*models.Driver, error)
 	UpdateDriver(id uint32, model *models.UpdateDriverModel) (*models.Driver, error)
 	DeleteDriver(id uint32) error
+	GetDriverCoords() ([]*models.DriverCoords, error)
+	GetDriverStat(model *models.DriverStatRequestModel) ([]*models.DriverStat, error)
 }

@@ -1,0 +1,32 @@
+package usecases
+
+import (
+	"github.com/hse-trpo-taxi/backend/models"
+)
+
+type OrderUseCase struct {
+}
+
+func NewOrderUseCase() *OrderUseCase {
+	return &OrderUseCase{}
+}
+
+func (o OrderUseCase) GetWeekStat() (*models.OrderWeekStat, error) {
+	return &models.OrderWeekStat{
+		Mon: 13,
+		Thu: 11,
+		Wed: 12,
+		Tue: 14,
+		Fri: 20,
+		Sat: 25,
+		Sun: 43,
+	}, nil
+}
+
+func (o OrderUseCase) GetCurrentStat() (*models.CurrentStat, error) {
+	return &models.CurrentStat{
+		Order:     62,
+		Free:      30,
+		Technical: 8,
+	}, nil
+}

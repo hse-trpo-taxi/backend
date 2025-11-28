@@ -141,3 +141,41 @@ func (handler *DriverHandler) DeleteDriver(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (handler *DriverHandler) GetDriversMeanScore(w http.ResponseWriter, r *http.Request) {
+	score, err := handler.driverUS.GetDriversMeanScore()
+
+	if err != nil {
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDriversMeanScore", err)
+	}
+
+	respondWithJSON(w, score, handler.lgr, "GetDriversMeanScore")
+}
+
+func (handler *DriverHandler) GetDriverCoords(w http.ResponseWriter, r *http.Request) {
+	coords, err := handler.driverUS.GetDriversCoords()
+
+	if err != nil {
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDriversCoords", err)
+	}
+
+	respondWithJSON(w, coords, handler.lgr, "GetDriverCoords")
+}
+
+func (handler *DriverHandler) GetDriverStat(w http.ResponseWriter, r *http.Request) {
+	var request *models.DriverStatRequestModel
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "GetDriverStat", err)
+	}
+
+	items, err := handler.driverUS.GetDriverStat(request)
+
+	if err != nil {
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDriverStat", err)
+	}
+
+	respondWithJSON(w, items, handler.lgr, "GetDriverStat")
+}

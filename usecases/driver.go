@@ -54,3 +54,31 @@ func (useCase *DriverUseCase) UpdateDriver(id uint32, model *models.UpdateDriver
 func (useCase *DriverUseCase) DeleteDriver(id uint32) error {
 	return useCase.DriverRepository.DeleteDriver(id)
 }
+
+func (useCase *DriverUseCase) GetDriversMeanScore() (*models.DriversMeanScore, error) {
+	return &models.DriversMeanScore{
+		Score:       3.78,
+		TimeWaiting: 12,
+		TimeFree:    2,
+	}, nil
+}
+
+func (useCase *DriverUseCase) GetDriversCoords() ([]*models.DriverCoords, error) {
+	items, err := useCase.DriverRepository.GetDriverCoords()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (useCase *DriverUseCase) GetDriverStat(model *models.DriverStatRequestModel) ([]*models.DriverStat, error) {
+	items, err := useCase.DriverRepository.GetDriverStat(model)
+
+	if err != nil {
+		return nil, err
+	}
+	
+	return items, nil
+}

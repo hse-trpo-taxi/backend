@@ -46,6 +46,10 @@ func (repository *DriverRepository) GetDrivers() ([]*models.Driver, error) {
 			&newItem.Rating,
 			&newItem.CreatedAt,
 			&newItem.UpdatedAt,
+			&newItem.Status,
+			&newItem.TimeWork,
+			&newItem.X,
+			&newItem.Y,
 		)
 
 		if err != nil {
@@ -74,6 +78,10 @@ func (repository *DriverRepository) GetDriverById(id uint32) (*models.Driver, er
 		&newItem.Rating,
 		&newItem.CreatedAt,
 		&newItem.UpdatedAt,
+		&newItem.Status,
+		&newItem.TimeWork,
+		&newItem.X,
+		&newItem.Y,
 	)
 
 	if err != nil {
@@ -111,6 +119,10 @@ func (repository *DriverRepository) CreateDriver(model *models.CreateDriverModel
 		Rating:        model.Rating,
 		CreatedAt:     createdAt,
 		UpdatedAt:     updatedAt,
+		Status:        "atRequest",
+		TimeWork:      4,
+		X:             0,
+		Y:             0,
 	}, nil
 }
 
@@ -141,6 +153,10 @@ func (repository *DriverRepository) UpdateDriver(id uint32, model *models.Update
 		&driver.Rating,
 		&driver.CreatedAt,
 		&driver.UpdatedAt,
+		&driver.Status,
+		&driver.TimeWork,
+		&driver.X,
+		&driver.Y,
 	)
 
 	if err != nil {
@@ -160,4 +176,82 @@ func (repository *DriverRepository) DeleteDriver(id uint32) error {
 	_, err = repository.db.Exec(context.Background(), query, args...)
 
 	return err
+}
+
+func (repository *DriverRepository) GetDriverCoords() ([]*models.DriverCoords, error) {
+	query, args, err := repository.builder.Select("id, name, x, y").
+		From("drivers").
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := repository.db.Query(context.Background(), query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	items := make([]*models.DriverCoords, 0)
+
+	for rows.Next() {
+		newItem := &models.DriverCoords{}
+		err = rows.Scan(
+			&newItem.ID,
+			&newItem.Name,
+			&newItem.X,
+			&newItem.Y,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, newItem)
+	}
+
+	return items, nil
+}
+
+func (repository *DriverRepository) GetDriverStat(model *models.DriverStatRequestModel) ([]*models.DriverStat, error) {
+	query, args, err := repository.builder.Select("id, name, status, phone, time_work").
+		From("drivers").
+		Where(squirrel.Eq{"status": model.Status}).
+		Offset(model.Skip).
+		Limit(model.Limit).
+		ToSql()
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := repository.db.Query(context.Background(), query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	items := make([]*models.DriverStat, 0)
+
+	for rows.Next() {
+		newItem := &models.DriverStat{}
+		err = rows.Scan(
+			&newItem.Id,
+			&newItem.Name,
+			&newItem.Status,
+			&newItem.Phone,
+			&newItem.TimeWork,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, newItem)
+	}
+
+	return items, nil
+
 }

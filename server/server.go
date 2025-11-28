@@ -104,14 +104,21 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	carRepo := repositories.NewCarRepository(server.pgDB, server.builder)
 	clientRepo := repositories.NewClientRepository(server.pgDB, server.builder)
 	driverRepo := repositories.NewDriverRepository(server.pgDB, server.builder)
+	supportRepo := repositories.NewSupportRepository(server.pgDB, server.builder)
 
 	carUS := usecases.NewCarUseCase(carRepo)
 	clientUS := usecases.NewClientUseCase(clientRepo)
 	driverUS := usecases.NewDriverUseCase(driverRepo)
+	supportUS := usecases.NewSupportUseCase(supportRepo)
+	orderUS := usecases.NewOrderUseCase()
+	userUS := usecases.NewUserUseCase()
 
 	carHandler := handlers.NewCarHandler(carUS, server.logger)
 	clientHandler := handlers.NewClientHandler(clientUS, server.logger)
 	driverHandler := handlers.NewDriverHandler(driverUS, server.logger)
+	supportHandler := handlers.NewSupportHandler(supportUS, server.logger)
+	orderHandler := handlers.NewOrderHandler(orderUS, server.logger)
+	userHandler := handlers.NewUserHandler(userUS, server.logger)
 
 	router.HandleFunc("/api/clients", clientHandler.GetClients).Methods("GET")
 	router.HandleFunc("/api/clients/{id}", clientHandler.GetClientById).Methods("GET")
@@ -125,6 +132,9 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	router.HandleFunc("/api/drivers", driverHandler.CreateDriver).Methods("POST")
 	router.HandleFunc("/api/drivers/{id}", driverHandler.UpdateDriver).Methods("PUT")
 	router.HandleFunc("/api/drivers/{id}", driverHandler.DeleteDriver).Methods("DELETE")
+	router.HandleFunc("/api/drivers/meanScore", driverHandler.GetDriversMeanScore).Methods("GET")
+	router.HandleFunc("/api/drivers/coords", driverHandler.GetDriverCoords).Methods("GET")
+	router.HandleFunc("/api/drivers/stat", driverHandler.GetDriverStat).Methods("POST")
 
 	// Car routes
 	router.HandleFunc("/api/cars", carHandler.GetCars).Methods("GET")
@@ -132,6 +142,16 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	router.HandleFunc("/api/cars", carHandler.CreateCar).Methods("POST")
 	router.HandleFunc("/api/cars/{id}", carHandler.UpdateCar).Methods("PUT")
 	router.HandleFunc("/api/cars/{id}", carHandler.DeleteCar).Methods("DELETE")
+
+	// Support routes
+	router.HandleFunc("/api/support/requests", supportHandler.GetRecent).Methods("GET")
+
+	// User routes
+	router.HandleFunc("/api/user/current", userHandler.GetCurrent).Methods("GET")
+
+	// Order routes
+	router.HandleFunc("/api/order/weekStat", orderHandler.GetWeekStat).Methods("GET")
+	router.HandleFunc("/api/order/currentStat", orderHandler.GetCurrentStats).Methods("GET")
 
 	// Health check endpoint
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
