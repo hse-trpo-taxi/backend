@@ -25,9 +25,17 @@ type Driver struct {
 
 	TimeWork int `json:"time_work" db:"time_work"`
 
-	X int `json:"x" db:"x"`
+	X float64 `json:"x" db:"x"`
 
-	Y int `json:"y" db:"y"`
+	Y float64 `json:"y" db:"y"`
+
+	ScoreDriver float64 `json:"scoreDriver" db:"score_driver"`
+
+	Passport int `json:"passport" db:"passport"`
+
+	Snils int `json:"snils" db:"snils"`
+
+	Inn int `json:"inn" db:"inn"`
 }
 
 type CreateDriverModel struct {
@@ -55,10 +63,10 @@ type DriversMeanScore struct {
 }
 
 type DriverCoords struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	X    int    `json:"x"`
-	Y    int    `json:"y"`
+	ID   int     `json:"id"`
+	Name string  `json:"name"`
+	X    float64 `json:"x"`
+	Y    float64 `json:"y"`
 }
 
 type DriverStat struct {
@@ -73,4 +81,24 @@ type DriverStatRequestModel struct {
 	Skip   uint64 `json:"skip"`
 	Limit  uint64 `json:"limit"`
 	Status string `json:"status"`
+}
+
+type DriverShortModel struct {
+	Name        string  `json:"name"`
+	Phone       string  `json:"phone"`
+	Status      string  `json:"status"`
+	ScoreDriver float64 `json:"scoreDriver"`
+	Passport    int     `json:"passport"`
+	Snils       int     `json:"snils"`
+	Inn         int     `json:"inn"`
+}
+
+type DriverResponseModel struct {
+	Car    *CarDriverModel   `json:"car"`
+	Driver *DriverShortModel `json:"driver"`
+}
+
+type DriverShortInfo struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
 }

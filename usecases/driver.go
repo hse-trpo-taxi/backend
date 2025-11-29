@@ -2,16 +2,19 @@ package usecases
 
 import (
 	"github.com/hse-trpo-taxi/backend/models"
+	"github.com/hse-trpo-taxi/backend/usecases/cars"
 	"github.com/hse-trpo-taxi/backend/usecases/drivers"
 )
 
 type DriverUseCase struct {
 	drivers.DriverRepository
+	cars.CarRepository
 }
 
-func NewDriverUseCase(driverRepository drivers.DriverRepository) *DriverUseCase {
+func NewDriverUseCase(driverRepository drivers.DriverRepository, carRepository cars.CarRepository) *DriverUseCase {
 	return &DriverUseCase{
 		DriverRepository: driverRepository,
+		CarRepository:    carRepository,
 	}
 }
 
@@ -24,13 +27,37 @@ func (useCase *DriverUseCase) GetDrivers() ([]*models.Driver, error) {
 	return items, nil
 }
 
-func (useCase *DriverUseCase) GetDriverById(id uint32) (*models.Driver, error) {
-	car, err := useCase.DriverRepository.GetDriverById(id)
+func (useCase *DriverUseCase) GetDriverById(id uint32) (*models.DriverResponseModel, error) {
+	driver, err := useCase.DriverRepository.GetDriverById(id)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return car, nil
+	car, err := useCase.CarRepository.GetCarByDriverId(uint32(driver.ID))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.DriverResponseModel{
+		Car: &models.CarDriverModel{
+			Number:      car.ID,
+			Model:       car.Model,
+			Running:     car.Running,
+			ScoreSystem: car.ScoreSystem,
+			ScoreUsers:  car.ScoreUsers,
+		},
+		Driver: &models.DriverShortModel{
+			Name:        driver.Name,
+			Phone:       driver.Phone,
+			Status:      driver.Status,
+			ScoreDriver: driver.ScoreDriver,
+			Passport:    driver.Passport,
+			Inn:         driver.Inn,
+			Snils:       driver.Snils,
+		},
+	}, nil
 }
 
 func (useCase *DriverUseCase) CreateDriver(model *models.CreateDriverModel) (*models.Driver, error) {
@@ -79,6 +106,6 @@ func (useCase *DriverUseCase) GetDriverStat(model *models.DriverStatRequestModel
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return items, nil
 }

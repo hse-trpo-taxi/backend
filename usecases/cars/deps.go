@@ -18,4 +18,5 @@ type CarRepository interface {
 	CreateCar(model *models.CreateCarModel) (*models.Car, error)
 	UpdateCar(id uint32, model *models.UpdateCarModel) (*models.Car, error)
 	DeleteCar(id uint32) error
+	GetCarByDriverId(DriverId uint32) (*models.Car, error)
 }

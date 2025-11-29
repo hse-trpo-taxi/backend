@@ -2,13 +2,15 @@ package usecases
 
 import (
 	"github.com/hse-trpo-taxi/backend/models"
+	"github.com/hse-trpo-taxi/backend/usecases/orders"
 )
 
 type OrderUseCase struct {
+	orders.OrderRepository
 }
 
-func NewOrderUseCase() *OrderUseCase {
-	return &OrderUseCase{}
+func NewOrderUseCase(order orders.OrderRepository) *OrderUseCase {
+	return &OrderUseCase{order}
 }
 
 func (o OrderUseCase) GetWeekStat() (*models.OrderWeekStat, error) {

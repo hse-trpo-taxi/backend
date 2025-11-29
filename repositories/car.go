@@ -162,3 +162,33 @@ func (repository *CarRepository) DeleteCar(id uint32) error {
 
 	return err
 }
+
+func (repository *CarRepository) GetCarByDriverId(driverId uint32) (*models.Car, error) {
+	query, args, err := repository.builder.Select("*").From("cars").Where(squirrel.Eq{"driver_id": driverId}).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	row := repository.db.QueryRow(context.Background(), query, args...)
+	newItem := &models.Car{}
+	err = row.Scan(
+		&newItem.ID,
+		&newItem.DriverID,
+		&newItem.Brand,
+		&newItem.Model,
+		&newItem.Year,
+		&newItem.LicensePlate,
+		&newItem.Color,
+		&newItem.CreatedAt,
+		&newItem.UpdatedAt,
+		&newItem.Running,
+		&newItem.ScoreUsers,
+		&newItem.ScoreSystem,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return newItem, nil
+}

@@ -24,6 +24,12 @@ type Car struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	// UpdatedAt is the timestamp when the car record was last modified
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+
+	Running int `json:"running" db:"running"`
+
+	ScoreUsers float64 `json:"scoreUsers" db:"score_users"`
+
+	ScoreSystem float64 `json:"scoreSystem" db:"score_systems"`
 }
 
 func (model Car) InsertColumns() []string {
@@ -59,4 +65,12 @@ func (model *CreateCarModel) Validate() bool {
 	}
 
 	return true
+}
+
+type CarDriverModel struct {
+	Number      int     `json:"number" db:"number"`
+	Model       string  `json:"model" db:"model"`
+	Running     int     `json:"running" db:"running"`
+	ScoreSystem float64 `json:"scoreSystem" db:"score_systems"`
+	ScoreUsers  float64 `json:"scoreUsers" db:"score_users"`
 }
