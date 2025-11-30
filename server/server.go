@@ -155,8 +155,6 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	// Order routes
 	router.HandleFunc("/api/order/weekStat", orderHandler.GetWeekStat).Methods("GET")
 	router.HandleFunc("/api/order/currentStat", orderHandler.GetCurrentStats).Methods("GET")
-
-	// Orders list with pagination
 	router.HandleFunc("/api/orders/list", orderHandler.GetOrdersList).Methods("POST")
 
 	// Driver-specific order routes

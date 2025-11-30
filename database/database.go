@@ -118,7 +118,18 @@ func createTables(pool *pgxpool.Pool) error {
 		FOREIGN KEY (driver_id) REFERENCES drivers(id)
 	);`
 
-	tables := []string{clientsTable, driversTable, carsTable, ordersTable, driverSchedulesTable}
+	supportRequestsTable := `
+	CREATE TABLE IF NOT EXISTS support_requests (
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,
+		comment TEXT,
+		time_reacting_score INTEGER DEFAULT 0,
+		quality_answer_score INTEGER DEFAULT 0,
+		date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);`
+
+	tables := []string{clientsTable, driversTable, carsTable, ordersTable, driverSchedulesTable, supportRequestsTable}
 	for _, table := range tables {
 		if _, err := pool.Exec(context.Background(), table); err != nil {
 			return err

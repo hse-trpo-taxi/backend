@@ -22,7 +22,7 @@ type Config struct {
 // SERVER_PORT defaults to "8080" and DATABASE_URL is constructed from individual database parameters.
 func LoadConfig() *Config {
 	config := &Config{
-		ServerPort:  getEnv("SERVER_PORT", "8080"),
+		ServerPort:  getEnv("SERVER_PORT", ":8080"),
 		DatabaseDSN: getEnv("DATABASE_URL", getDefaultPostgresURL()),
 	}
 

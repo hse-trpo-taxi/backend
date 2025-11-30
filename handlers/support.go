@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"github.com/hse-trpo-taxi/backend/usecases/support"
 	"log/slog"
 	"net/http"
+
+	"github.com/hse-trpo-taxi/backend/usecases/support"
 )
 
 type SupportHandler struct {
@@ -20,6 +21,7 @@ func (handler *SupportHandler) GetRecent(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		respondWithError(w, handler.lgr, http.StatusInternalServerError, "SupportHandler", err)
+		return
 	}
 
 	respondWithJSON(w, items, handler.lgr, "SupportHandler")

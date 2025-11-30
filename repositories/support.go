@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"time"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/hse-trpo-taxi/backend/models"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -40,12 +42,21 @@ func (s SupportRepository) GetRecent() ([]*models.SupportModel, error) {
 	for rows.Next() {
 		newItem := &models.SupportModel{}
 
+		// support_requests table has columns: id, name, comment,
+		// time_reacting_score, quality_answer_score, date, created_at
+		// We only need name..date for the model, so scan id and created_at
+		// into throwaway variables.
+		var id int
+		var createdAt time.Time
+
 		err = rows.Scan(
+			&id,
 			&newItem.Name,
 			&newItem.Comment,
 			&newItem.TimeReactingScore,
 			&newItem.QualityAnswerScore,
 			&newItem.Date,
+			&createdAt,
 		)
 
 		if err != nil {
@@ -53,7 +64,6 @@ func (s SupportRepository) GetRecent() ([]*models.SupportModel, error) {
 		}
 
 		items = append(items, newItem)
-
 	}
 
 	return items, nil
