@@ -2,6 +2,13 @@ package server
 
 import (
 	"context"
+	"log/slog"
+	"net"
+	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/gorilla/mux"
 	"github.com/hse-trpo-taxi/backend/config"
@@ -10,12 +17,6 @@ import (
 	"github.com/hse-trpo-taxi/backend/usecases"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/sync/errgroup"
-	"log/slog"
-	"net"
-	"net/http"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 const (
@@ -105,12 +106,13 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	clientRepo := repositories.NewClientRepository(server.pgDB, server.builder)
 	driverRepo := repositories.NewDriverRepository(server.pgDB, server.builder)
 	supportRepo := repositories.NewSupportRepository(server.pgDB, server.builder)
+	orderRepo := repositories.NewOrderRepository(server.pgDB, server.builder)
 
 	carUS := usecases.NewCarUseCase(carRepo)
 	clientUS := usecases.NewClientUseCase(clientRepo)
-	driverUS := usecases.NewDriverUseCase(driverRepo)
+	driverUS := usecases.NewDriverUseCase(driverRepo, carRepo)
 	supportUS := usecases.NewSupportUseCase(supportRepo)
-	orderUS := usecases.NewOrderUseCase()
+	orderUS := usecases.NewOrderUseCase(orderRepo)
 	userUS := usecases.NewUserUseCase()
 
 	carHandler := handlers.NewCarHandler(carUS, server.logger)
@@ -133,8 +135,9 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	router.HandleFunc("/api/drivers/{id}", driverHandler.UpdateDriver).Methods("PUT")
 	router.HandleFunc("/api/drivers/{id}", driverHandler.DeleteDriver).Methods("DELETE")
 	router.HandleFunc("/api/drivers/meanScore", driverHandler.GetDriversMeanScore).Methods("GET")
-	router.HandleFunc("/api/drivers/coords", driverHandler.GetDriverCoords).Methods("GET")
-	router.HandleFunc("/api/drivers/stat", driverHandler.GetDriverStat).Methods("POST")
+	router.HandleFunc("/api/drivers/coords", driverHandler.GetDriversCoords).Methods("GET")
+	router.HandleFunc("/api/drivers/stat", driverHandler.GetDriversStat).Methods("POST")
+	router.HandleFunc("/api/drivers/{id}/schedule", driverHandler.GetDriverSchedule).Methods("GET")
 
 	// Car routes
 	router.HandleFunc("/api/cars", carHandler.GetCars).Methods("GET")

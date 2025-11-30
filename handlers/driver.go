@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/hse-trpo-taxi/backend/models"
-	"github.com/hse-trpo-taxi/backend/usecases/drivers"
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
+	"github.com/hse-trpo-taxi/backend/models"
+	"github.com/hse-trpo-taxi/backend/usecases/drivers"
 )
 
 type DriverHandler struct {
@@ -152,30 +153,55 @@ func (handler *DriverHandler) GetDriversMeanScore(w http.ResponseWriter, r *http
 	respondWithJSON(w, score, handler.lgr, "GetDriversMeanScore")
 }
 
-func (handler *DriverHandler) GetDriverCoords(w http.ResponseWriter, r *http.Request) {
+func (handler *DriverHandler) GetDriversCoords(w http.ResponseWriter, r *http.Request) {
 	coords, err := handler.driverUS.GetDriversCoords()
 
 	if err != nil {
 		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDriversCoords", err)
+		return
 	}
 
-	respondWithJSON(w, coords, handler.lgr, "GetDriverCoords")
+	respondWithJSON(w, coords, handler.lgr, "GetDriversCoords")
 }
 
-func (handler *DriverHandler) GetDriverStat(w http.ResponseWriter, r *http.Request) {
+func (handler *DriverHandler) GetDriversStat(w http.ResponseWriter, r *http.Request) {
 	var request *models.DriverStatRequestModel
 
 	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
-		respondWithError(w, handler.lgr, http.StatusBadRequest, "GetDriverStat", err)
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "GetDriversStat", err)
+		return
 	}
 
-	items, err := handler.driverUS.GetDriverStat(request)
+	items, err := handler.driverUS.GetDriversStat(request)
 
 	if err != nil {
-		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDriverStat", err)
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDriversStat", err)
+		return
 	}
 
-	respondWithJSON(w, items, handler.lgr, "GetDriverStat")
+	respondWithJSON(w, items, handler.lgr, "GetDriversStat")
+}
+
+func (handler *DriverHandler) GetDriverSchedule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "GetDriverSchedule", err)
+		return
+	}
+	var request *models.DriverScheduleRequestModel
+
+	err = json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		respondWithError(w, handler.lgr, http.StatusBadRequest, "GetDriverSchedule", err)
+		return
+	}
+	schedule, err := handler.driverUS.GetDriverSchedule(uint32(id), request)
+	if err != nil {
+		respondWithError(w, handler.lgr, http.StatusInternalServerError, "GetDriverSchedule", err)
+		return
+	}
+	respondWithJSON(w, schedule, handler.lgr, "GetDriverSchedule")
 }

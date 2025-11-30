@@ -102,3 +102,17 @@ type DriverShortInfo struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
+
+// DriverSchedule represents a single work day for a driver.
+// Date stores the day the driver works (DATE in DB).
+type DriverSchedule struct {
+	Date time.Time `json:"date" db:"date"`
+}
+
+// DriverScheduleRequestModel contains optional start and end dates
+// to request a driver's schedule. If zero, defaults are applied
+// (start = today, end = start + 1 month) by the repository.
+type DriverScheduleRequestModel struct {
+	Start time.Time `json:"start" db:"start"`
+	End   time.Time `json:"end" db:"end"`
+}

@@ -5,9 +5,10 @@ package database
 import (
 	"context"
 	"database/sql"
+	"log/slog"
+
 	"github.com/hse-trpo-taxi/backend/config"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log/slog"
 
 	_ "github.com/lib/pq"
 )
@@ -90,7 +91,34 @@ func createTables(pool *pgxpool.Pool) error {
 		FOREIGN KEY (driver_id) REFERENCES drivers(id)
 	);`
 
-	tables := []string{clientsTable, driversTable, carsTable}
+	ordersTable := `
+	CREATE TABLE IF NOT EXISTS orders (
+		id SERIAL PRIMARY KEY,
+		driver_id INTEGER,
+		first_address TEXT NOT NULL,
+		second_address TEXT NOT NULL,
+		current BOOLEAN DEFAULT FALSE,
+		time INTEGER DEFAULT 0,
+		passengers INTEGER DEFAULT 1,
+		time_close INTEGER DEFAULT 0,
+		score INTEGER DEFAULT 0,
+		x DOUBLE PRECISION DEFAULT 0,
+		y DOUBLE PRECISION DEFAULT 0,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (driver_id) REFERENCES drivers(id)
+	);`
+
+	driverSchedulesTable := `
+	CREATE TABLE IF NOT EXISTS driver_schedules (
+		id SERIAL PRIMARY KEY,
+		driver_id INTEGER NOT NULL,
+		date DATE NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (driver_id) REFERENCES drivers(id)
+	);`
+
+	tables := []string{clientsTable, driversTable, carsTable, ordersTable, driverSchedulesTable}
 	for _, table := range tables {
 		if _, err := pool.Exec(context.Background(), table); err != nil {
 			return err

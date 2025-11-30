@@ -2,10 +2,11 @@ package repositories
 
 import (
 	"context"
+	"time"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/hse-trpo-taxi/backend/models"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"time"
 )
 
 type DriverRepository struct {
@@ -178,7 +179,7 @@ func (repository *DriverRepository) DeleteDriver(id uint32) error {
 	return err
 }
 
-func (repository *DriverRepository) GetDriverCoords() ([]*models.DriverCoords, error) {
+func (repository *DriverRepository) GetDriversCoords() ([]*models.DriverCoords, error) {
 	query, args, err := repository.builder.Select("id, name, x, y").
 		From("drivers").
 		ToSql()
@@ -214,7 +215,7 @@ func (repository *DriverRepository) GetDriverCoords() ([]*models.DriverCoords, e
 	return items, nil
 }
 
-func (repository *DriverRepository) GetDriverStat(model *models.DriverStatRequestModel) ([]*models.DriverStat, error) {
+func (repository *DriverRepository) GetDriversStat(model *models.DriverStatRequestModel) ([]*models.DriverStat, error) {
 	query, args, err := repository.builder.Select("id, name, status, phone, time_work").
 		From("drivers").
 		Where(squirrel.Eq{"status": model.Status}).
@@ -254,4 +255,51 @@ func (repository *DriverRepository) GetDriverStat(model *models.DriverStatReques
 
 	return items, nil
 
+}
+
+func (repository *DriverRepository) GetDriverSchedule(id uint32, req *models.DriverScheduleRequestModel) ([]*models.DriverSchedule, error) {
+	var start, end time.Time
+	if req != nil {
+		start = req.Start
+		end = req.End
+	}
+
+	if start.IsZero() {
+		now := time.Now()
+		start = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	}
+	if end.IsZero() {
+		end = start.AddDate(0, 1, 0)
+	}
+
+	query, args, err := repository.builder.Select("date").
+		From("driver_schedules").
+		Where(squirrel.And{
+			squirrel.Eq{"driver_id": id},
+			squirrel.GtOrEq{"date": start},
+			squirrel.LtOrEq{"date": end},
+		}).
+		OrderBy("date ASC").
+		ToSql()
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := repository.db.Query(context.Background(), query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*models.DriverSchedule, 0)
+	var d time.Time
+	for rows.Next() {
+		if err := rows.Scan(&d); err != nil {
+			return nil, err
+		}
+		items = append(items, &models.DriverSchedule{Date: d})
+	}
+
+	return items, nil
 }

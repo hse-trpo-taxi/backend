@@ -91,7 +91,7 @@ func (useCase *DriverUseCase) GetDriversMeanScore() (*models.DriversMeanScore, e
 }
 
 func (useCase *DriverUseCase) GetDriversCoords() ([]*models.DriverCoords, error) {
-	items, err := useCase.DriverRepository.GetDriverCoords()
+	items, err := useCase.DriverRepository.GetDriversCoords()
 
 	if err != nil {
 		return nil, err
@@ -100,12 +100,21 @@ func (useCase *DriverUseCase) GetDriversCoords() ([]*models.DriverCoords, error)
 	return items, nil
 }
 
-func (useCase *DriverUseCase) GetDriverStat(model *models.DriverStatRequestModel) ([]*models.DriverStat, error) {
-	items, err := useCase.DriverRepository.GetDriverStat(model)
+func (useCase *DriverUseCase) GetDriversStat(model *models.DriverStatRequestModel) ([]*models.DriverStat, error) {
+	items, err := useCase.DriverRepository.GetDriversStat(model)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return items, nil
+}
+
+func (useCase *DriverUseCase) GetDriverSchedule(id uint32, req *models.DriverScheduleRequestModel) ([]*models.DriverSchedule, error) {
+	schedule, err := useCase.DriverRepository.GetDriverSchedule(id, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return schedule, nil
 }
