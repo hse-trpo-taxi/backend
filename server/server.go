@@ -130,14 +130,14 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 
 	// Driver routes
 	router.HandleFunc("/api/drivers", driverHandler.GetDrivers).Methods("GET")
-	router.HandleFunc("/api/drivers/{id}", driverHandler.GetDriverById).Methods("GET")
+	router.HandleFunc("/api/drivers/{id:[0-9]+}", driverHandler.GetDriverById).Methods("GET")
 	router.HandleFunc("/api/drivers", driverHandler.CreateDriver).Methods("POST")
-	router.HandleFunc("/api/drivers/{id}", driverHandler.UpdateDriver).Methods("PUT")
-	router.HandleFunc("/api/drivers/{id}", driverHandler.DeleteDriver).Methods("DELETE")
+	router.HandleFunc("/api/drivers/{id:[0-9]+}", driverHandler.UpdateDriver).Methods("PUT")
+	router.HandleFunc("/api/drivers/{id:[0-9]+}", driverHandler.DeleteDriver).Methods("DELETE")
 	router.HandleFunc("/api/drivers/meanScore", driverHandler.GetDriversMeanScore).Methods("GET")
 	router.HandleFunc("/api/drivers/coords", driverHandler.GetDriversCoords).Methods("GET")
 	router.HandleFunc("/api/drivers/stat", driverHandler.GetDriversStat).Methods("POST")
-	router.HandleFunc("/api/drivers/{id}/schedule", driverHandler.GetDriverSchedule).Methods("POST")
+	router.HandleFunc("/api/drivers/{id:[0-9]+}/schedule", driverHandler.GetDriverSchedule).Methods("POST")
 
 	// Car routes
 	router.HandleFunc("/api/cars", carHandler.GetCars).Methods("GET")
@@ -158,8 +158,8 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	router.HandleFunc("/api/orders/list", orderHandler.GetOrdersList).Methods("POST")
 
 	// Driver-specific order routes
-	router.HandleFunc("/api/drivers/{id}/orders", orderHandler.GetDriverOrders).Methods("POST")
-	router.HandleFunc("/api/drivers/{id}/order/current", orderHandler.GetDriverCurrentOrder).Methods("GET")
+	router.HandleFunc("/api/drivers/{id:[0-9]+}/orders", orderHandler.GetDriverOrders).Methods("POST")
+	router.HandleFunc("/api/drivers/{id:[0-9]+}/order/current", orderHandler.GetDriverCurrentOrder).Methods("GET")
 
 	// Health check endpoint
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
