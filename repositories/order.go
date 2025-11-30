@@ -79,12 +79,20 @@ func (r *OrderRepository) GetCurrentOrder(driverId int) (*models.CurrentOrderInf
 }
 
 // GetOrderList returns client-facing order list with driver short info
-func (r *OrderRepository) GetOrderList() ([]*models.OrderClientList, error) {
+func (r *OrderRepository) GetOrderList(skip uint64, limit uint64) ([]*models.OrderClientList, error) {
 	// select order fields and driver short fields
-	query, args, err := r.builder.Select("o.id, o.first_address, o.second_address, o.score, d.name, d.phone, d.status, d.score_driver, d.passport, d.snils, d.inn").
+	sb := r.builder.Select("o.id, o.first_address, o.second_address, o.score, d.name, d.phone, d.status, d.score_driver, d.passport, d.snils, d.inn").
 		From("orders o").
-		LeftJoin("drivers d ON o.driver_id = d.id").
-		ToSql()
+		LeftJoin("drivers d ON o.driver_id = d.id")
+
+	if limit > 0 {
+		sb = sb.Limit(limit)
+	}
+	if skip > 0 {
+		sb = sb.Offset(skip)
+	}
+
+	query, args, err := sb.ToSql()
 
 	if err != nil {
 		return nil, err

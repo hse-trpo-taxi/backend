@@ -60,3 +60,8 @@ type OrderClientList struct {
 	Driver        *DriverShortModel
 	Score         int `json:"score" db:"score"`
 }
+
+type OrderClientListRequestModel struct {
+	Skip  uint64 `json:"skip"`
+	Limit uint64 `json:"limit"`
+}

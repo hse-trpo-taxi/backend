@@ -32,3 +32,15 @@ func (o OrderUseCase) GetCurrentStat() (*models.CurrentStat, error) {
 		Technical: 8,
 	}, nil
 }
+
+func (o OrderUseCase) GetLastOrders(driverId int, limit int) ([]*models.OrderDriverList, error) {
+	return o.OrderRepository.GetLastOrders(driverId, limit)
+}
+
+func (o OrderUseCase) GetCurrentOrder(driverId int) (*models.CurrentOrderInfo, error) {
+	return o.OrderRepository.GetCurrentOrder(driverId)
+}
+
+func (o OrderUseCase) GetOrderList(skip uint64, limit uint64) ([]*models.OrderClientList, error) {
+	return o.OrderRepository.GetOrderList(skip, limit)
+}

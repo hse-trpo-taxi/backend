@@ -137,7 +137,7 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	router.HandleFunc("/api/drivers/meanScore", driverHandler.GetDriversMeanScore).Methods("GET")
 	router.HandleFunc("/api/drivers/coords", driverHandler.GetDriversCoords).Methods("GET")
 	router.HandleFunc("/api/drivers/stat", driverHandler.GetDriversStat).Methods("POST")
-	router.HandleFunc("/api/drivers/{id}/schedule", driverHandler.GetDriverSchedule).Methods("GET")
+	router.HandleFunc("/api/drivers/{id}/schedule", driverHandler.GetDriverSchedule).Methods("POST")
 
 	// Car routes
 	router.HandleFunc("/api/cars", carHandler.GetCars).Methods("GET")
@@ -155,6 +155,13 @@ func (server *Server) PrepareHandlers(router *mux.Router) error {
 	// Order routes
 	router.HandleFunc("/api/order/weekStat", orderHandler.GetWeekStat).Methods("GET")
 	router.HandleFunc("/api/order/currentStat", orderHandler.GetCurrentStats).Methods("GET")
+
+	// Orders list with pagination
+	router.HandleFunc("/api/orders/list", orderHandler.GetOrdersList).Methods("POST")
+
+	// Driver-specific order routes
+	router.HandleFunc("/api/drivers/{id}/orders", orderHandler.GetDriverOrders).Methods("POST")
+	router.HandleFunc("/api/drivers/{id}/order/current", orderHandler.GetDriverCurrentOrder).Methods("GET")
 
 	// Health check endpoint
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
