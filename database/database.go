@@ -73,6 +73,14 @@ func createTables(pool *pgxpool.Pool) error {
 		phone VARCHAR(50) NOT NULL,
 		license_number VARCHAR(50) NOT NULL,
 		rating REAL DEFAULT 0.0,
+		status VARCHAR(50) DEFAULT 'atRequest',
+		time_work INTEGER DEFAULT 0,
+		x DOUBLE PRECISION DEFAULT 0,
+		y DOUBLE PRECISION DEFAULT 0,
+		score_driver DOUBLE PRECISION DEFAULT 0,
+		passport INTEGER DEFAULT 0,
+		snils INTEGER DEFAULT 0,
+		inn INTEGER DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
