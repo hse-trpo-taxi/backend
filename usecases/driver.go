@@ -44,7 +44,7 @@ func (useCase *DriverUseCase) GetDriverById(id uint32) (*models.DriverResponseMo
 		Car: &models.CarDriverModel{
 			Number:      car.ID,
 			Model:       car.Model,
-			Running:     car.Running,
+			Mileage:     car.Mileage,
 			ScoreSystem: car.ScoreSystem,
 			ScoreUsers:  car.ScoreUsers,
 		},

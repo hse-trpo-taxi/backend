@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/hse-trpo-taxi/backend/errors"
-	"github.com/hse-trpo-taxi/backend/models"
 	"log/slog"
 	"net/http"
+
+	"github.com/hse-trpo-taxi/backend/errors"
+	"github.com/hse-trpo-taxi/backend/models"
 )
 
 func respondWithError(w http.ResponseWriter, logger *slog.Logger, statusCode int, handlerName string, err error) {

@@ -2,10 +2,11 @@ package repositories
 
 import (
 	"context"
+	"time"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/hse-trpo-taxi/backend/models"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"time"
 )
 
 type CarRepository struct {
@@ -46,6 +47,9 @@ func (repository *CarRepository) GetCars() ([]*models.Car, error) {
 			&newItem.Year,
 			&newItem.LicensePlate,
 			&newItem.Color,
+			&newItem.Mileage,
+			&newItem.ScoreUsers,
+			&newItem.ScoreSystem,
 			&newItem.CreatedAt,
 			&newItem.UpdatedAt,
 		)
@@ -75,6 +79,9 @@ func (repository *CarRepository) GetCarById(id uint32) (*models.Car, error) {
 		&newItem.Year,
 		&newItem.LicensePlate,
 		&newItem.Color,
+		&newItem.Mileage,
+		&newItem.ScoreUsers,
+		&newItem.ScoreSystem,
 		&newItem.CreatedAt,
 		&newItem.UpdatedAt,
 	)
@@ -123,7 +130,7 @@ func (repository *CarRepository) UpdateCar(id uint32, model *models.UpdateCarMod
 	query, args, err := repository.builder.Update("cars").
 		Where(squirrel.Eq{"id": id}).
 		SetMap(map[string]interface{}{"driver_id": model.DriverID, "color": model.Color, "updated_at": time.Now()}).
-		Suffix("RETURNING id, driver_id, brand, model, year, license_plate, color, created_at, updated_at").
+		Suffix("RETURNING id, driver_id, brand, model, year, license_plate, color, mileage, score_users, score_system, created_at, updated_at").
 		ToSql()
 
 	if err != nil {
@@ -140,6 +147,9 @@ func (repository *CarRepository) UpdateCar(id uint32, model *models.UpdateCarMod
 		&car.Year,
 		&car.LicensePlate,
 		&car.Color,
+		&car.Mileage,
+		&car.ScoreUsers,
+		&car.ScoreSystem,
 		&car.CreatedAt,
 		&car.UpdatedAt,
 	)
@@ -179,11 +189,11 @@ func (repository *CarRepository) GetCarByDriverId(driverId uint32) (*models.Car,
 		&newItem.Year,
 		&newItem.LicensePlate,
 		&newItem.Color,
-		&newItem.CreatedAt,
-		&newItem.UpdatedAt,
-		&newItem.Running,
+		&newItem.Mileage,
 		&newItem.ScoreUsers,
 		&newItem.ScoreSystem,
+		&newItem.CreatedAt,
+		&newItem.UpdatedAt,
 	)
 
 	if err != nil {

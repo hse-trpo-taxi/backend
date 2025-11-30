@@ -25,11 +25,11 @@ type Car struct {
 	// UpdatedAt is the timestamp when the car record was last modified
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 
-	Running int `json:"running" db:"running"`
+	Mileage int `json:"mileage" db:"mileage"`
 
 	ScoreUsers float64 `json:"scoreUsers" db:"score_users"`
 
-	ScoreSystem float64 `json:"scoreSystem" db:"score_systems"`
+	ScoreSystem float64 `json:"scoreSystem" db:"score_system"`
 }
 
 func (model Car) InsertColumns() []string {
@@ -40,6 +40,9 @@ func (model Car) InsertColumns() []string {
 		"year",
 		"license_plate",
 		"color",
+		"mileage",
+		"score_users",
+		"score_system",
 		"created_at",
 		"updated_at",
 	}
@@ -70,7 +73,7 @@ func (model *CreateCarModel) Validate() bool {
 type CarDriverModel struct {
 	Number      int     `json:"number" db:"number"`
 	Model       string  `json:"model" db:"model"`
-	Running     int     `json:"running" db:"running"`
-	ScoreSystem float64 `json:"scoreSystem" db:"score_systems"`
+	Mileage     int     `json:"mileage" db:"mileage"`
+	ScoreSystem float64 `json:"scoreSystem" db:"score_system"`
 	ScoreUsers  float64 `json:"scoreUsers" db:"score_users"`
 }

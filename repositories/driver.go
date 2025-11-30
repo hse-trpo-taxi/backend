@@ -19,7 +19,7 @@ func NewDriverRepository(db *pgxpool.Pool, builder *squirrel.StatementBuilderTyp
 }
 
 func (repository *DriverRepository) GetDrivers() ([]*models.Driver, error) {
-	query, args, err := repository.builder.Select("*").
+	query, args, err := repository.builder.Select("id, name, phone, license_number, rating, status, time_work, x, y, score_driver, passport, snils, inn, created_at, updated_at").
 		From("drivers").
 		ToSql()
 
@@ -45,12 +45,16 @@ func (repository *DriverRepository) GetDrivers() ([]*models.Driver, error) {
 			&newItem.Phone,
 			&newItem.LicenseNumber,
 			&newItem.Rating,
-			&newItem.CreatedAt,
-			&newItem.UpdatedAt,
 			&newItem.Status,
 			&newItem.TimeWork,
 			&newItem.X,
 			&newItem.Y,
+			&newItem.ScoreDriver,
+			&newItem.Passport,
+			&newItem.Snils,
+			&newItem.Inn,
+			&newItem.CreatedAt,
+			&newItem.UpdatedAt,
 		)
 
 		if err != nil {
@@ -64,7 +68,7 @@ func (repository *DriverRepository) GetDrivers() ([]*models.Driver, error) {
 }
 
 func (repository *DriverRepository) GetDriverById(id uint32) (*models.Driver, error) {
-	query, args, err := repository.builder.Select("*").From("drivers").Where(squirrel.Eq{"id": id}).ToSql()
+	query, args, err := repository.builder.Select("id, name, phone, license_number, rating, status, time_work, x, y, score_driver, passport, snils, inn, created_at, updated_at").From("drivers").Where(squirrel.Eq{"id": id}).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -77,12 +81,16 @@ func (repository *DriverRepository) GetDriverById(id uint32) (*models.Driver, er
 		&newItem.Phone,
 		&newItem.LicenseNumber,
 		&newItem.Rating,
-		&newItem.CreatedAt,
-		&newItem.UpdatedAt,
 		&newItem.Status,
 		&newItem.TimeWork,
 		&newItem.X,
 		&newItem.Y,
+		&newItem.ScoreDriver,
+		&newItem.Passport,
+		&newItem.Snils,
+		&newItem.Inn,
+		&newItem.CreatedAt,
+		&newItem.UpdatedAt,
 	)
 
 	if err != nil {
@@ -94,7 +102,7 @@ func (repository *DriverRepository) GetDriverById(id uint32) (*models.Driver, er
 
 func (repository *DriverRepository) CreateDriver(model *models.CreateDriverModel) (*models.Driver, error) {
 	query, args, err := repository.builder.Insert("drivers").
-		Columns("name", "phone", "email", "license_number", "rating", "created_at", "updated_at").
+		Columns("name", "phone", "license_number", "rating", "created_at", "updated_at").
 		Values(model.Name, model.Phone, model.LicenseNumber, model.Rating, time.Now(), time.Now()).
 		Suffix("RETURNING id, created_at, updated_at").
 		ToSql()
@@ -137,7 +145,7 @@ func (repository *DriverRepository) UpdateDriver(id uint32, model *models.Update
 			"rating":         model.Rating,
 			"updated_at":     time.Now(),
 		}).
-		Suffix("RETURNING id, name, phone, license_number, rating, created_at, updated_at").
+		Suffix("RETURNING id, name, phone, license_number, rating, status, time_work, x, y, score_driver, passport, snils, inn, created_at, updated_at").
 		ToSql()
 
 	if err != nil {
@@ -152,12 +160,16 @@ func (repository *DriverRepository) UpdateDriver(id uint32, model *models.Update
 		&driver.Phone,
 		&driver.LicenseNumber,
 		&driver.Rating,
-		&driver.CreatedAt,
-		&driver.UpdatedAt,
 		&driver.Status,
 		&driver.TimeWork,
 		&driver.X,
 		&driver.Y,
+		&driver.ScoreDriver,
+		&driver.Passport,
+		&driver.Snils,
+		&driver.Inn,
+		&driver.CreatedAt,
+		&driver.UpdatedAt,
 	)
 
 	if err != nil {

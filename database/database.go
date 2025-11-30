@@ -94,6 +94,9 @@ func createTables(pool *pgxpool.Pool) error {
 		year INTEGER NOT NULL,
 		license_plate VARCHAR(50) NOT NULL,
 		color VARCHAR(50) NOT NULL,
+		mileage INTEGER DEFAULT 0,
+		score_users DOUBLE PRECISION DEFAULT 0,
+		score_system DOUBLE PRECISION DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (driver_id) REFERENCES drivers(id)

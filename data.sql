@@ -39,12 +39,29 @@ SELECT * FROM (VALUES
 WHERE NOT EXISTS (SELECT 1 FROM drivers);
 
 -- Cars: link to drivers by name (works for this seed dataset)
-INSERT INTO cars (driver_id, brand, model, year, license_plate, color)
+INSERT INTO cars (driver_id, brand, model, year, license_plate, color, mileage, score_users, score_system)
 SELECT * FROM (VALUES
-  ((SELECT id FROM drivers WHERE name='Иван Иванов' LIMIT 1), 'Toyota', 'Camry', 2018, 'A111AA', 'white'),
-  ((SELECT id FROM drivers WHERE name='Олег Кузнецов' LIMIT 1), 'Lada', 'Vesta', 2017, 'B222BB', 'black'),
-  ((SELECT id FROM drivers WHERE name='Елена Крылова' LIMIT 1), 'Kia', 'Rio', 2019, 'C333CC', 'silver')
-) AS v(driver_id, brand, model, year, license_plate, color)
+  ((SELECT id FROM drivers WHERE name='Иван Иванов' LIMIT 1), 'Toyota', 'Camry', 2018, 'A111AA', 'white', 32000, 4.5, 4.2),
+  ((SELECT id FROM drivers WHERE name='Олег Кузнецов' LIMIT 1), 'Lada', 'Vesta', 2017, 'B222BB', 'black', 85000, 4.0, 3.9),
+  ((SELECT id FROM drivers WHERE name='Елена Крылова' LIMIT 1), 'Kia', 'Rio', 2019, 'C333CC', 'silver', 21000, 4.7, 4.6),
+  ((SELECT id FROM drivers WHERE name='Сергей Петров' LIMIT 1), 'Renault', 'Logan', 2016, 'D444DD', 'gray', 98000, 3.8, 3.7),
+  ((SELECT id FROM drivers WHERE name='Анна Сидорова' LIMIT 1), 'Hyundai', 'Solaris', 2018, 'E555EE', 'blue', 45000, 4.6, 4.5),
+  ((SELECT id FROM drivers WHERE name='Павел Иванов' LIMIT 1), 'Ford', 'Focus', 2015, 'F666FF', 'red', 123000, 3.9, 3.8),
+  ((SELECT id FROM drivers WHERE name='Марина Козлова' LIMIT 1), 'Volkswagen', 'Polo', 2020, 'G777GG', 'white', 15000, 4.8, 4.7),
+  ((SELECT id FROM drivers WHERE name='Дмитрий Орлов' LIMIT 1), 'Skoda', 'Rapid', 2016, 'H888HH', 'black', 76000, 3.6, 3.5),
+  ((SELECT id FROM drivers WHERE name='Ольга Новикова' LIMIT 1), 'Nissan', 'Almera', 2019, 'I999II', 'silver', 30000, 4.4, 4.3),
+  ((SELECT id FROM drivers WHERE name='Игорь Лебедев' LIMIT 1), 'Lifan', 'Solano', 2014, 'J000JJ', 'green', 140000, 3.7, 3.6),
+  ((SELECT id FROM drivers WHERE name='Ксения Белова' LIMIT 1), 'BMW', '3 Series', 2017, 'K121KK', 'black', 67000, 4.5, 4.2),
+  ((SELECT id FROM drivers WHERE name='Владимир Медведев' LIMIT 1), 'Audi', 'A4', 2015, 'L131LL', 'gray', 110000, 3.6, 3.5),
+  ((SELECT id FROM drivers WHERE name='Татьяна Федорова' LIMIT 1), 'Mitsubishi', 'Lancer', 2016, 'M141MM', 'white', 82000, 4.3, 4.0),
+  ((SELECT id FROM drivers WHERE name='Александр Соколов' LIMIT 1), 'Opel', 'Astra', 2014, 'N151NN', 'silver', 130000, 3.9, 3.8),
+  ((SELECT id FROM drivers WHERE name='Наталья Морозова' LIMIT 1), 'Kia', 'Ceed', 2020, 'O161OO', 'blue', 12000, 4.9, 4.8),
+  ((SELECT id FROM drivers WHERE name='Роман Волков' LIMIT 1), 'Renault', 'Duster', 2018, 'P171PP', 'black', 90000, 3.5, 3.4),
+  ((SELECT id FROM drivers WHERE name='Екатерина Сергеева' LIMIT 1), 'Hyundai', 'Solaris', 2019, 'Q181QQ', 'silver', 40000, 4.1, 4.0),
+  ((SELECT id FROM drivers WHERE name='Максим Крылов' LIMIT 1), 'Toyota', 'Corolla', 2017, 'R191RR', 'white', 72000, 4.4, 4.1),
+  ((SELECT id FROM drivers WHERE name='Людмила Павлова' LIMIT 1), 'Chevrolet', 'Niva', 2013, 'S202SS', 'brown', 150000, 3.8, 3.7),
+  ((SELECT id FROM drivers WHERE name='Григорий Захаров' LIMIT 1), 'UAZ', 'Patriot', 2012, 'T212TT', 'green', 160000, 3.7, 3.6)
+) AS v(driver_id, brand, model, year, license_plate, color, mileage, score_users, score_system)
 WHERE NOT EXISTS (SELECT 1 FROM cars);
 
 -- Orders: some current and recent orders
@@ -56,12 +73,70 @@ SELECT * FROM (VALUES
 ) AS v(driver_id, first_address, second_address, current, time, passengers, time_close, score, x, y)
 WHERE NOT EXISTS (SELECT 1 FROM orders);
 
--- Driver schedules: next few days for the seeded drivers
+-- Ensure each driver has between 5 and 15 orders. For drivers with fewer orders,
+-- insert the missing number so total per driver is in [5,15].
+-- This is safe to run multiple times: it only inserts when a driver has less than
+-- the randomly chosen target number for that driver.
+INSERT INTO orders (driver_id, first_address, second_address, current, time, passengers, time_close, score, x, y, created_at, updated_at)
+SELECT d.id,
+       'from: ' || d.name || ' #' || gs.i,
+       'to: ' || d.name || ' #' || gs.i,
+       FALSE,
+       (10 + (random()*50))::int,
+       (1 + floor(random()*4))::int,
+       0,
+       (1 + floor(random()*5))::int,
+       d.x + (random() - 0.5) * 0.01,
+       d.y + (random() - 0.5) * 0.01,
+       CURRENT_TIMESTAMP - ((floor(random()*30))::int || ' days')::interval,
+       CURRENT_TIMESTAMP - ((floor(random()*30))::int || ' days')::interval
+FROM drivers d
+LEFT JOIN LATERAL (SELECT count(*) AS cnt FROM orders o WHERE o.driver_id = d.id) existing ON TRUE
+LEFT JOIN LATERAL (SELECT (floor(random()*11)+5)::int AS target) tgt ON TRUE
+LEFT JOIN LATERAL (SELECT GREATEST(0, tgt.target - COALESCE(existing.cnt,0)) AS to_add) need ON TRUE
+JOIN LATERAL generate_series(1, need.to_add) AS gs(i) ON need.to_add > 0;
+
+-- For drivers that currently have status 'onOrder', mark exactly one of their orders as active.
+-- We first clear current flags for those drivers, then set the most recent order to current = TRUE.
+UPDATE orders o SET current = FALSE
+FROM drivers d
+WHERE o.driver_id = d.id AND d.status = 'onOrder';
+
+WITH latest AS (
+  SELECT o.id,
+         o.driver_id,
+         ROW_NUMBER() OVER (PARTITION BY o.driver_id ORDER BY o.created_at DESC, o.id DESC) rn
+  FROM orders o
+  JOIN drivers d ON o.driver_id = d.id
+  WHERE d.status = 'onOrder'
+)
+UPDATE orders o SET current = TRUE
+FROM latest l
+WHERE o.id = l.id AND l.rn = 1;
+
+-- Driver schedules: one entry per seeded driver (plain VALUES rows)
 INSERT INTO driver_schedules (driver_id, date)
 SELECT * FROM (VALUES
-  ((SELECT id FROM drivers WHERE name='Иван Иванов' LIMIT 1), CURRENT_DATE),
-  ((SELECT id FROM drivers WHERE name='Иван Иванов' LIMIT 1), CURRENT_DATE + INTERVAL '1 day'),
-  ((SELECT id FROM drivers WHERE name='Елена Крылова' LIMIT 1), CURRENT_DATE + INTERVAL '2 day')
+  ((SELECT id FROM drivers WHERE name='Иван Иванов' LIMIT 1), CURRENT_DATE + INTERVAL '0 day'),
+  ((SELECT id FROM drivers WHERE name='Олег Кузнецов' LIMIT 1), CURRENT_DATE + INTERVAL '1 day'),
+  ((SELECT id FROM drivers WHERE name='Елена Крылова' LIMIT 1), CURRENT_DATE + INTERVAL '2 day'),
+  ((SELECT id FROM drivers WHERE name='Сергей Петров' LIMIT 1), CURRENT_DATE + INTERVAL '3 day'),
+  ((SELECT id FROM drivers WHERE name='Анна Сидорова' LIMIT 1), CURRENT_DATE + INTERVAL '4 day'),
+  ((SELECT id FROM drivers WHERE name='Павел Иванов' LIMIT 1), CURRENT_DATE + INTERVAL '5 day'),
+  ((SELECT id FROM drivers WHERE name='Марина Козлова' LIMIT 1), CURRENT_DATE + INTERVAL '6 day'),
+  ((SELECT id FROM drivers WHERE name='Дмитрий Орлов' LIMIT 1), CURRENT_DATE + INTERVAL '7 day'),
+  ((SELECT id FROM drivers WHERE name='Ольга Новикова' LIMIT 1), CURRENT_DATE + INTERVAL '8 day'),
+  ((SELECT id FROM drivers WHERE name='Игорь Лебедев' LIMIT 1), CURRENT_DATE + INTERVAL '9 day'),
+  ((SELECT id FROM drivers WHERE name='Ксения Белова' LIMIT 1), CURRENT_DATE + INTERVAL '10 day'),
+  ((SELECT id FROM drivers WHERE name='Владимир Медведев' LIMIT 1), CURRENT_DATE + INTERVAL '11 day'),
+  ((SELECT id FROM drivers WHERE name='Татьяна Федорова' LIMIT 1), CURRENT_DATE + INTERVAL '12 day'),
+  ((SELECT id FROM drivers WHERE name='Александр Соколов' LIMIT 1), CURRENT_DATE + INTERVAL '13 day'),
+  ((SELECT id FROM drivers WHERE name='Наталья Морозова' LIMIT 1), CURRENT_DATE + INTERVAL '14 day'),
+  ((SELECT id FROM drivers WHERE name='Роман Волков' LIMIT 1), CURRENT_DATE + INTERVAL '15 day'),
+  ((SELECT id FROM drivers WHERE name='Екатерина Сергеева' LIMIT 1), CURRENT_DATE + INTERVAL '16 day'),
+  ((SELECT id FROM drivers WHERE name='Максим Крылов' LIMIT 1), CURRENT_DATE + INTERVAL '17 day'),
+  ((SELECT id FROM drivers WHERE name='Людмила Павлова' LIMIT 1), CURRENT_DATE + INTERVAL '18 day'),
+  ((SELECT id FROM drivers WHERE name='Григорий Захаров' LIMIT 1), CURRENT_DATE + INTERVAL '19 day')
 ) AS v(driver_id, date)
 WHERE NOT EXISTS (SELECT 1 FROM driver_schedules);
 
